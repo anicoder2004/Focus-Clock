@@ -1,0 +1,69 @@
+﻿CREATE TABLE IF NOT EXISTS AlarmEntity (
+    id TEXT NOT NULL PRIMARY KEY,
+    time TEXT NOT NULL,
+    recurrence_type TEXT NOT NULL,
+    recurrence_data TEXT,
+    note TEXT NOT NULL DEFAULT '',
+    audio_path TEXT,
+    target_exe_path TEXT,
+    is_enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS AlarmEntity_is_enabled_idx ON AlarmEntity(is_enabled);
+
+CREATE TABLE IF NOT EXISTS AlarmTriggerHistory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alarm_id TEXT NOT NULL,
+    triggered_at TEXT NOT NULL,
+    snoozed_until TEXT,
+    dismissed INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY(alarm_id) REFERENCES AlarmEntity(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS AlarmTriggerHistory_alarm_id_idx ON AlarmTriggerHistory(alarm_id);
+
+insertAlarm:
+INSERT OR REPLACE INTO AlarmEntity(
+    id,
+    time,
+    recurrence_type,
+    recurrence_data,
+    note,
+    audio_path,
+    target_exe_path,
+    is_enabled,
+    created_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateAlarm:
+UPDATE AlarmEntity
+SET time = ?, recurrence_type = ?, recurrence_data = ?, note = ?, audio_path = ?, target_exe_path = ?, is_enabled = ?
+WHERE id = ?;
+
+deleteAlarmById:
+DELETE FROM AlarmEntity WHERE id = ?;
+
+selectAlarmById:
+SELECT * FROM AlarmEntity WHERE id = ?;
+
+selectAllAlarms:
+SELECT * FROM AlarmEntity ORDER BY created_at;
+
+selectEnabledAlarms:
+SELECT * FROM AlarmEntity WHERE is_enabled = 1 ORDER BY created_at;
+
+insertTriggerHistory:
+INSERT INTO AlarmTriggerHistory(alarm_id, triggered_at, snoozed_until, dismissed)
+VALUES (?, ?, ?, ?);
+
+CREATE TABLE IF NOT EXISTS Settings (
+    key TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+selectSetting:
+SELECT value FROM Settings WHERE key = ?;
+
+insertSetting:
+INSERT OR REPLACE INTO Settings(key, value) VALUES (?, ?);
